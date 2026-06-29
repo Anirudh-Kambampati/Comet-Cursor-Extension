@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comet</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <svg class="logo" width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10 0L11.8 8.2L20 10L11.8 11.8L10 20L8.2 11.8L0 10L8.2 8.2L10 0Z" fill="url(#popup-paint)"/>
+      <defs>
+        <linearGradient id="popup-paint" x1="0" y1="0" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#FFFFFF"/>
+          <stop offset="0.5" stop-color="#C084FC"/>
+          <stop offset="1" stop-color="#60A5FA"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <span class="title">Comet</span>
+  </header>
+
+  <main>
+    <div class="control-row">
+      <label for="toggle-enabled">Enabled</label>
+      <button id="toggle-enabled" class="toggle" role="switch" aria-checked="true">
+        <span class="thumb"></span>
+      </button>
+    </div>
+  </main>
+
+  <script src="popup.js"></script>
+</body>
+</html>

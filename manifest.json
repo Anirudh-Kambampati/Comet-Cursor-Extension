@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Comet",
+  "version": "1.0.0",
+  "description": "A premium animated cursor.",
+
+  "permissions": ["storage"],
+
+  "host_permissions": ["<all_urls>"],
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/main.js"],
+      "css": ["src/content/cursor.css"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "Comet"
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["src/assets/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
