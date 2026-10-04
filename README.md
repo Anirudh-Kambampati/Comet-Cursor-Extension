@@ -51,7 +51,7 @@ chrome://extensions
 
 6. Click **Load unpacked**
 
-7. Select the generated build folder.
+7. Select the generated build (dist) folder.
 
 ---
 
