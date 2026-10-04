@@ -1,55 +1,90 @@
 import type { PointerState } from "./types.js";
 
 // Interactive elements that trigger the hover state.
-const HOVER_SELECTOR = "a, button, input, textarea, select, label, [role=button], [tabindex]";
+// tabindex="-1" is excluded: it marks programmatic focus targets (often whole page regions).
+const HOVER_SELECTOR =
+  "a, button, input, textarea, select, label, summary, [role=button], [tabindex]:not([tabindex='-1'])";
 
 /**
  * Tracks raw pointer position and interaction state.
  * All event listeners are passive so they never block scrolling.
- * State is read directly each animation frame — no callbacks.
+ * State is read directly each animation frame; `onChange` only wakes the loop.
  */
-export function createPointerTracker(): PointerState & { vx: number; vy: number } {
-  const state: PointerState & { vx: number; vy: number } = {
+export function createPointerTracker(
+  onChange: () => void,
+  signal:   AbortSignal,
+): PointerState {
+  const state: PointerState = {
     x: window.innerWidth / 2,
     y: window.innerHeight / 2,
+    px: window.innerWidth / 2,
+    py: window.innerHeight / 2,
+    lastMove: 0,
     hovering: false,
     clicking: false,
     visible: false,
-    vx: 0,
-    vy: 0,
   };
 
-  let prevX = state.x;
-  let prevY = state.y;
+  const opts = { passive: true, signal } as const;
 
   window.addEventListener(
     "pointermove",
     (e) => {
-      const newX = e.clientX;
-      const newY = e.clientY;
+      // Touch has no hovering pointer to replace.
+      if (e.pointerType === "touch") return;
 
-      // Simple velocity (delta per frame, smoothed later)
-      state.vx = (newX - prevX) * 0.6;  // damping for smoothness
-      state.vy = (newY - prevY) * 0.6;
+      state.x = e.clientX;
+      state.y = e.clientY;
 
-      prevX = newX;
-      prevY = newY;
+      // Draw the core where the pointer is about to be, hiding ~1 frame of latency.
+      const predicted =
+        typeof e.getPredictedEvents === "function" ? e.getPredictedEvents() : [];
+      const last = predicted[predicted.length - 1];
+      state.px = last?.clientX ?? e.clientX;
+      state.py = last?.clientY ?? e.clientY;
 
-      state.x = newX;
-      state.y = newY;
-      state.visible = true;
-      state.hovering =
-        e.target instanceof Element &&
-        e.target.closest(HOVER_SELECTOR) !== null;
+      state.lastMove = e.timeStamp;
+      state.visible  = true;
+      onChange();
     },
-    { passive: true }
+    opts,
   );
 
-  window.addEventListener("pointerdown", () => { state.clicking = true; }, { passive: true });
-  window.addEventListener("pointerup",   () => { state.clicking = false; }, { passive: true });
+  // Hover only changes when the element under the pointer changes.
+  document.addEventListener(
+    "pointerover",
+    (e) => {
+      const hovering =
+        e.target instanceof Element && e.target.closest(HOVER_SELECTOR) !== null;
+      if (hovering !== state.hovering) {
+        state.hovering = hovering;
+        onChange();
+      }
+    },
+    opts,
+  );
 
-  // Hide cursor elements when the pointer leaves the window entirely.
-  window.addEventListener("pointerleave", () => { state.visible = false; }, { passive: true });
+  const release = (): void => {
+    if (!state.clicking) return;
+    state.clicking = false;
+    onChange();
+  };
+
+  window.addEventListener("pointerdown",   () => { state.clicking = true; onChange(); }, opts);
+  window.addEventListener("pointerup",     release, opts);
+  window.addEventListener("pointercancel", release, opts);
+  window.addEventListener("blur",          release, opts);
+
+  // Pointer left the window (or entered an iframe): relatedTarget is null.
+  document.addEventListener(
+    "pointerout",
+    (e) => {
+      if (e.relatedTarget !== null) return;
+      state.visible = false;
+      onChange();
+    },
+    opts,
+  );
 
   return state;
 }

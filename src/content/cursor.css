@@ -1,68 +1,71 @@
 /*
  * cursor.css — Comet cursor styles.
  *
- * The trail is now rendered on a single <canvas> element — no trail CSS needed.
- * Only the three cursor layers (#comet-core, #comet-ring, #comet-glow) live here.
+ * The trail and the core are <canvas> elements with their glow pre-baked by
+ * sprites.ts — no CSS filters on anything that moves.
  */
 
-/* ── Hide native cursor everywhere ──────────────────────────────────────── */
-html,
-body,
-* {
+/* ── Hide native cursor — only while Comet is drawn (class set by cursor.ts) ── */
+html.comet-active,
+html.comet-active * {
   cursor: none !important;
 }
 
 /* ── Shared layer defaults ───────────────────────────────────────────────── */
+#comet-trail,
 #comet-core,
 #comet-ring,
 #comet-glow {
   position: fixed;
   top:  0;
   left: 0;
+  margin: 0;
+  max-width:  none;
+  max-height: none;
 
   pointer-events: none;
   user-select:    none;
 
+  /* Top of the page's stacking order; DOM order sorts the layers among themselves. */
+  z-index: 2147483647;
+}
+
+#comet-core,
+#comet-ring,
+#comet-glow {
   transform:    translate(-999px, -999px);
   will-change:  transform, opacity;
   opacity:      0;
 }
 
-/* ── Core: sparkle SVG ───────────────────────────────────────────────────── */
-#comet-core {
-  width:  20px;
-  height: 20px;
-
-  object-fit: contain;
-
-  filter:
-    drop-shadow(0 0 4px rgba(255, 255, 255, 1.0))
-    drop-shadow(0 0 12px rgba(168, 85, 247, 0.95))
-    drop-shadow(0 0 28px rgba(139, 92, 246, 0.65))
-    drop-shadow(0 0 6px rgba(224, 170, 255, 0.4));
-
-  z-index: 999999;
+/* ── Trail canvas: full viewport, backing store sized by trail.ts ──────── */
+#comet-trail {
+  width:  100vw;
+  height: 100vh;
+  contain: strict;
 }
 
 /* ── Ring ────────────────────────────────────────────────────────────────── */
 #comet-ring {
+  box-sizing: content-box;
   width:  26px;
   height: 26px;
 
   border:        1.8px solid rgba(168, 85, 247, 0.72);
   border-radius: 50%;
-
-  z-index: 999998;
 }
 
-/* ── Glow blob ───────────────────────────────────────────────────────────── */
+/* ── Glow blob — a gradient, not a blur filter ──────────────────────────── */
 #comet-glow {
-  width:  48px;
-  height: 48px;
+  width:  100px;
+  height: 100px;
 
   border-radius: 50%;
-  background:    rgba(139, 92, 246, 0.28);
-  filter:        blur(20px);
-
-  z-index: 999997;
+  background: radial-gradient(
+    circle closest-side,
+    rgba(139, 92, 246, 0.24) 0%,
+    rgba(139, 92, 246, 0.14) 40%,
+    rgba(139, 92, 246, 0.04) 75%,
+    rgba(139, 92, 246, 0)    100%
+  );
 }
